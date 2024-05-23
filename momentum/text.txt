@@ -1,0 +1,72 @@
+### CONTEXT ####
+I am developing a trading strategy in Pine, to run on TradingView Backtesting.
+I found a STRATEGY that can be used for building up my STUDY.
+
+The underlying logic and study should be implemented as a strategy by using the functions from the STRATEGY
+
+
+### STUDY ###
+study(shorttitle = "SQZMOM_LB", title="Squeeze Momentum Indicator [LazyBear]", overlay=false)
+
+length = input(20, title="BB Length")
+mult = input(2.0,title="BB MultFactor")
+lengthKC=input(20, title="KC Length")
+multKC = input(1.5, title="KC MultFactor")
+
+useTrueRange = input(true, title="Use TrueRange (KC)", type=bool)
+
+// Calculate BB
+source = close
+basis = sma(source, length)
+dev = multKC * stdev(source, length)
+upperBB = basis + dev
+lowerBB = basis - dev
+
+// Calculate KC
+ma = sma(source, lengthKC)
+range = useTrueRange ? tr : (high - low)
+rangema = sma(range, lengthKC)
+upperKC = ma + rangema * multKC
+lowerKC = ma - rangema * multKC
+
+sqzOn  = (lowerBB > lowerKC) and (upperBB < upperKC)
+sqzOff = (lowerBB < lowerKC) and (upperBB > upperKC)
+noSqz  = (sqzOn == false) and (sqzOff == false)
+
+val = linreg(source  -  avg(avg(highest(high, lengthKC), lowest(low, lengthKC)),sma(close,lengthKC)), 
+            lengthKC,0)
+
+bcolor = iff( val > 0, 
+            iff( val > nz(val[1]), lime, green),
+            iff( val < nz(val[1]), red, maroon))
+scolor = noSqz ? blue : sqzOn ? black : gray 
+plot(val, color=bcolor, style=histogram, linewidth=4)
+plot(0, color=scolor, style=cross, linewidth=2)
+
+### STRATEGY ### 
+
+//@version=5
+strategy("Momentum Strategy_EDITED", overlay=true)
+length = input(40)
+price = close
+momentum(seria, length) =>
+	mom = seria - seria[length]
+	mom
+mom0 = momentum(price, length)
+mom1 = momentum( mom0, 1)
+if (mom0 > 0 and mom1 > 0)
+	strategy.entry("MomLE", strategy.long, stop=high+syminfo.mintick, comment="MomLE")
+else
+	strategy.cancel("MomLE")
+if (mom0 < 0 and mom1 < 0)
+	strategy.entry("MomSE", strategy.short, stop=low-syminfo.mintick, comment="MomSE")
+else
+	strategy.cancel("MomSE")
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
+
+### OBJECTIVE ###
+Write me this STRATEGY using Pine to run successfully without any errors or problems by logically deducting the working
+mechaincs of the STRATEGY and STUDY and mergeing them together.
+
+### STYLE ###
+WRITE Clean, reusable functioning code with sound reasoning.
